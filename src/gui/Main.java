@@ -1,6 +1,5 @@
 package gui;
 
-import backend.player.MPRIS2;
 import org.gnome.gdk.Event;
 import org.gnome.gdk.Pixbuf;
 import org.gnome.gtk.Gtk;
@@ -8,17 +7,19 @@ import org.gnome.gtk.Widget;
 import org.gnome.gtk.Window;
 import org.gnome.gtk.WindowType;
 
+import backend.player.dbus.Spotify;
+
 import java.io.IOException;
 
 public class Main {
 
-	public static final String VERSION = "0.2a";
+	public static final String VERSION = "0.3a";
 	private static MyApp c = new MyApp();
 	public static Thread t0;
 	public static Thread t1;
 
 	public static void main(String[] args) throws IOException {
-		new MPRIS2();
+		new Spotify();
 		Gtk.init(args);
 		Window w = new Window(WindowType.TOPLEVEL);
 		w.connect((Window.DeleteEvent) (arg0, arg1) -> {

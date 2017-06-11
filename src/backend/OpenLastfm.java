@@ -1,5 +1,6 @@
 package backend;
 
+import backend.player.Player;
 import backend.player.PlayerStatus;
 import backend.player.PlayerWrapper;
 import backend.player.Song;
@@ -7,6 +8,7 @@ import exceptions.PlayerException;
 import exceptions.SongException;
 
 import gui.Language;
+import gui.MusicInterface;
 
 public class OpenLastfm {
 
@@ -83,6 +85,10 @@ public class OpenLastfm {
 		playerWrapper.nextTrack();
 	}
 	
+	public void changeInterface(MusicInterface iface) throws PlayerException {
+		playerWrapper.changeInterface(iface);
+	}
+
 	public void setPref(String key, String value) {
 		prefs.setPref(key, value);
 	}
