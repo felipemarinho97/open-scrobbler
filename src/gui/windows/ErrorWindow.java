@@ -1,4 +1,4 @@
-package gui;
+package gui.windows;
 
 import org.freedesktop.icons.StateIcon;
 import org.gnome.gtk.Frame;

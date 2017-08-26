@@ -14,6 +14,9 @@ import org.gnome.gtk.VBox;
 import org.gnome.gtk.Window;
 import org.gnome.gtk.WindowType;
 
+import gui.windows.AboutWindow;
+import gui.windows.SettingsWindow;
+
 public class MyMenu extends MenuBar {
 	private MenuItem help;
 	private MenuItem file;
@@ -36,27 +39,7 @@ public class MyMenu extends MenuBar {
 			
 			@Override
 			public void onActivate(MenuItem arg0) {
-				Window w = new Window(WindowType.TOPLEVEL);
-				//w.setHasResizeGrip(false);
-				w.setTitle("About OpenLast.fm");
-				w.setDefaultSize(300, 140);
-				Box messageBox = new VBox(true, 5);
-				
-				Image img = null;
-				try {
-					img = new Image(new Pixbuf("last.fm-icon.png", 100, 100, true));
-				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				Label info = new Label("Obrigado por usar o OpenLast.fm 0.1\n"
-						+ "Desenvolvido por Felipe Marinho (C)");
-				info.setAlignHorizontal(Align.CENTER);
-				info.setAlignVertical(Align.CENTER);
-				info.setUseMarkup(true);
-				messageBox.packStart(img, true, true, 5);
-				messageBox.packStart(info, true, true, 5);
-				w.add(messageBox);
+				Window w = new AboutWindow();
 				w.showAll();
 			}
 		});

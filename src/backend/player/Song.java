@@ -1,7 +1,7 @@
 package backend.player;
 
 import exceptions.SongException;
-import org.bff.javampd.MPDSong;
+import org.bff.javampd.song.MPDSong;
 
 /**
  * Created by darklyn on 02/05/17.
@@ -20,8 +20,8 @@ public class Song {
     public Song(MPDSong song) throws SongException {
         super();
         this.title = song.getTitle();
-        this.album = song.getAlbum();
-        this.artist = song.getArtist();
+        this.album = song.getAlbumName();
+        this.artist = song.getArtistName();
         this.length = song.getLength();
         if (title == null || title.trim().isEmpty() 
         		|| album == null || album.trim().isEmpty() 

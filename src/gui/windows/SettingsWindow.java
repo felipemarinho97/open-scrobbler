@@ -1,4 +1,4 @@
-package gui;
+package gui.windows;
 
 import java.net.InterfaceAddress;
 
@@ -8,6 +8,9 @@ import org.gnome.gtk.*;
 
 import backend.OpenLastfm;
 import exceptions.PlayerException;
+import gui.Language;
+import gui.Main;
+import gui.MusicInterface;
 
 public class SettingsWindow extends Window {
 	
@@ -28,7 +31,7 @@ public class SettingsWindow extends Window {
 
 	public SettingsWindow() {
 		super();
-		this.openLastFm = MyApp.getOpenLastfm();
+		this.openLastFm = OpenLastfm.getInstance();
 		
 		this.setTitle("Preferences");
 		this.settingsBox = new Box(Orientation.VERTICAL, 0);
@@ -39,7 +42,7 @@ public class SettingsWindow extends Window {
 		this.buttonsBox = new Box(Orientation.HORIZONTAL, 5);
 
 		this.tabs.setShowBorder(false);
-		this.tabs.appendPage(this.openLastFMBox, new Label("OpenLast.fm"));
+		this.tabs.appendPage(this.openLastFMBox, new Label(Main.PROGRAM_NAME));
 		this.tabs.appendPage(this.musicPlayerBox, new Label("Music Player"));
 		
 		Frame tabsFrame = new Frame(null);
@@ -67,7 +70,7 @@ public class SettingsWindow extends Window {
 		
 		
 		Box apiKeyBox = new Box(Orientation.HORIZONTAL,5);
-		this.apiKeyEntry = new Entry(MyApp.getOpenLastfm().getPref("apiKey"));
+		this.apiKeyEntry = new Entry(this.openLastFm.getPref("apiKey"));
 		this.apiKeyEntry.setSizeRequest(260, 0);
 		apiKeyBox.packStart(new Label("Api Key:"), false, false, 1);
 		apiKeyBox.packStart(this.apiKeyEntry, false, true, 1);

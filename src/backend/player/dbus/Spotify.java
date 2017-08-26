@@ -5,12 +5,7 @@ import exceptions.SongException;
 
 import java.util.Map;
 
-import org.bff.javampd.exception.MPDConnectionException;
-import org.bff.javampd.exception.MPDPlayerException;
-import org.freedesktop.dbus.DBusConnection;
-import org.freedesktop.dbus.DBusInterface;
-import org.freedesktop.dbus.DBusInterfaceName;
-import org.freedesktop.dbus.Variant;
+import org.freedesktop.dbus.*;
 import org.freedesktop.dbus.exceptions.DBusException;
 
 import backend.player.Player;
@@ -27,9 +22,12 @@ public class Spotify implements Player {
     
 	private Properties propertiesInteface;
 	private DBusPlayer dBusPlayer;
+	private DBusConnection conn;
+	private Handler handler;
 
-	public Spotify() {
-        DBusConnection conn = null;
+	public Spotify(Handler handler) {
+		this.handler = handler;
+        conn = null;
         try {
             conn = DBusConnection.getConnection(DBusConnection.SESSION);
         } catch (DBusException e) {
@@ -49,9 +47,24 @@ public class Spotify implements Player {
         } catch (DBusException e) {
             e.printStackTrace();
         }
+        System.out.println("fui iniciado");
+        try {
+            conn.addSigHandler(Properties.PropertiesChanged.class, this.handler);
+        } catch (DBusException e) {
+            e.printStackTrace();
+        }
     }
-
-	public void fetchMetadata() throws PlayerException {
+	
+	@Override
+	protected void finalize() throws Throwable {
+		try {
+			conn.removeSigHandler(Properties.PropertiesChanged.class, handler);
+		} finally {
+			super.finalize();
+		}
+	}
+	
+	private void fetchMetadata() throws PlayerException {
 		Variant<Map> res;
 		
 		try {
@@ -63,7 +76,7 @@ public class Spotify implements Player {
 		this.metadata = res.getValue();
 	}
 	
-	public static String cleanMeta(String meta) {
+	private static String cleanMeta(String meta) {
 		return meta.substring(1, meta.length()-1);
 	}
 	
