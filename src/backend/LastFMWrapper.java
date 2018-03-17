@@ -94,7 +94,7 @@ public class LastFMWrapper {
 			case "imageURL":
 				return similars[num].getImageURL(ImageSize.SMALL);
 			case "url":
-				return similars[num].getUrl();
+				return concertaUrl(similars[num].getUrl());
 			case "name":
 				return similars[num].getName();
 			default:
@@ -117,15 +117,19 @@ public class LastFMWrapper {
 		}
 	}
 
+	private String concertaUrl(String url) {
+		return url.substring(0,20) + lang.getIso() + "/" + url.substring(20, url.length());
+	}
+
 	public String getAlbumLink() {
 		if (album == null) {
 			return "";
 		}
-		return this.album.getUrl();
+		return concertaUrl(this.album.getUrl());
 	}
 
 	public String getArtistLink() {
-		return this.artist.getUrl();
+		return concertaUrl(this.artist.getUrl());
 	}
 
 	public void setApiKey(String apiKey) {

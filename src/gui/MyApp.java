@@ -24,20 +24,19 @@ import org.gnome.gtk.Window;
 
 import backend.InfoRequester;
 import backend.OpenLastfm;
+import backend.PlayerEvent;
+import backend.PlayerListener;
+import backend.player.MPDPlayerEventID;
 import backend.player.Song;
 import exceptions.PlayerException;
 import exceptions.SongException;
+import util.Util;
 
 public class MyApp {
-	private Box artistInfoBox;
-	private Box artistBioBox;
-	private Box artistCoverBox;
-	private String artist;
+    private String artist;
 	private Box similarArtistsBox;
-	private Box conteiner;
-	private Notebook tab;
-	private Box musicBarBox;
-	private ProgressBar musicBar;
+    private Notebook tab;
+    private ProgressBar musicBar;
 	private Label actualLengh;
 	private Label musicLengh;
 	private String currentMusicTitle;
@@ -47,27 +46,21 @@ public class MyApp {
 	private Image artistCover;
 	private Window win;
 	private Label content;
-	private MenuBar menuBar;
-	private boolean stopped;
-	private Object playerStatus;
-	private String album;
+    private boolean stopped;
+    private String album;
 	private Image albumCover;
-	private Box playingBox;
-	private Button unloveButton;
+    private Button unloveButton;
 	private Button loveButton;
 	private EventBox unloveButtonBox;
 	private EventBox loveButtonBox;
-	private static OpenLastfm openLastfm;
+	private OpenLastfm openLastfm;
 	private Label commentTitle;
     private Box actionButtonsBox;
+	private int elapsed;
+	private boolean playing = false;
 
     public MyApp() {
-        try {
-            MyApp.openLastfm = new OpenLastfm();
-        } catch (PlayerException e) {
-            e.printStackTrace();
-            displayError(e);
-        }
+        openLastfm = OpenLastfm.getInstance();
         try {
 			this.song = new Song();
 		} catch (Exception e) {
@@ -79,18 +72,42 @@ public class MyApp {
 //        openLastfm.updateArtistRequester(artist);
 //        openLastfm.updateTrack(currentMusicTitle);
 //        openLastfm.getAlbumInfo(album);
+        this.openLastfm.addEventListener(new PlayerListener() {
+
+			@Override
+			public void onPlayerChanged(PlayerEvent event) {
+				String[] events = event.getEvents();
+		        for (String e : events) {
+		            if (e.equals("Metadata") ||
+		                    e.equals(MPDPlayerEventID.SONG_CHANGED.name()) ||
+		                    e.equals(MPDPlayerEventID.PLAYER_STARTED.name())) {
+		            	updateArtist();
+		            } else if (e.equals(MPDPlayerEventID.PLAYER_PAUSED.name()) ||
+		            		e.equals(MPDPlayerEventID.PLAYER_STOPPED.name()) ||
+		            		e.equals("Paused")) {
+		            	playing = false;
+		            } else if (e.equals(MPDPlayerEventID.PLAYER_UNPAUSED.name()) ||
+		            		e.equals("Playing")) {
+		            	playing = true;
+		            }
+		        }
+			}
+		});
 	}
 
     private void displayError(Exception e) {
         Window errorWindow = new Window();
         errorWindow.setTitle(e.toString());
         errorWindow.setIcon(StateIcon.DIALOG_ERROR);
-        errorWindow.add(new Label(e.getMessage()));
+        Box errorBox = new Box(Orientation.VERTICAL, 5);
+        errorBox.packStart(new Label(e.getMessage()), false, false, 5);
+        errorBox.packStart(new Label(Util.stackTraceToString(e)), false, false, 5);
+        errorWindow.add(errorBox);
         errorWindow.showAll();
     }
 
     public void buildStoppedState() {
-		win.setTitle("OpenLast.fm " + Main.VERSION);
+		win.setTitle(Main.PROGRAM_NAME + " " + Main.VERSION);
         try {
             this.albumCover.setImage(new Pixbuf("blank_album.png",100,100,true));
         } catch (FileNotFoundException e) {
@@ -103,7 +120,7 @@ public class MyApp {
         }
         this.updateMusicLengh(0);
         this.updateActualLengh(0);
-        this.playingTitle.setLabel("<span font_desc='sans 12'><b>OpenScrobbler</b></span>\n");
+        this.playingTitle.setLabel("<span font_desc='sans 12'><b>" + Main.PROGRAM_NAME + "</b></span>\n");
         this.commentTitle.setLabel("Play some music on your preferred player to start scrobbling.");
         actionButtonsBox.hide();
         tab.hide();
@@ -117,14 +134,14 @@ public class MyApp {
 
 //        updateTitle();
 
-        this.conteiner = new Box(Orientation.VERTICAL, 0);
-        this.artistInfoBox = new Box(Orientation.HORIZONTAL, 5);
-        this.artistBioBox = new Box(Orientation.VERTICAL, 5);
-        this.artistCoverBox = new Box(Orientation.VERTICAL, 5);
-        this.playingBox = new Box(Orientation.HORIZONTAL, 5);
-        this.musicBarBox = new Box(Orientation.HORIZONTAL, 1);
+        Box conteiner = new Box(Orientation.VERTICAL, 0);
+        Box artistInfoBox = new Box(Orientation.HORIZONTAL, 5);
+        Box artistBioBox = new Box(Orientation.VERTICAL, 5);
+        Box artistCoverBox = new Box(Orientation.VERTICAL, 5);
+        Box playingBox = new Box(Orientation.HORIZONTAL, 5);
+        Box musicBarBox = new Box(Orientation.HORIZONTAL, 1);
         this.actionButtonsBox = new Box(Orientation.HORIZONTAL, 3);
-        this.menuBar = new MyMenu();
+        MenuBar menuBar = new MyMenu();
         this.tab = new Notebook();
         this.tab.setBorderWidth(0);
 
@@ -203,37 +220,38 @@ public class MyApp {
         // Numix Black new RGBA(0.2, 0.2, 0.2, 1)
         // Last.fm RED new RGBA(0.83, 0.12, 0.16, 1)
 
-        this.musicBarBox.overrideBackground(StateFlags.NORMAL, new RGBA(0.2, 0.2, 0.2, 1));
-        this.musicBarBox.overrideColor(StateFlags.NORMAL, new RGBA(1, 1, 1, 0.8));
-        this.musicBarBox.setExpandVertical(false);
-        this.musicBarBox.setExpandHorizontal(false);
-        this.musicBarBox.packStart(new ControlButtons(), false, false, 1);
-        this.musicBarBox.packStart(this.musicBar, true, true, 1);
-        this.musicBarBox.packStart(actualLengh, false, false, 1);
-        this.musicBarBox.packEnd(musicLengh, false, false, 1);
+        musicBarBox.overrideBackground(StateFlags.NORMAL, new RGBA(0.2, 0.2, 0.2, 1));
+        musicBarBox.overrideColor(StateFlags.NORMAL, new RGBA(1, 1, 1, 0.8));
+        musicBarBox.setExpandVertical(false);
+        musicBarBox.setExpandHorizontal(false);
+        musicBarBox.packStart(new ControlButtons(), false, false, 1);
+        musicBarBox.packStart(this.musicBar, true, true, 1);
+        musicBarBox.packStart(actualLengh, false, false, 1);
+        musicBarBox.packEnd(musicLengh, false, false, 1);
 
-        this.artistCoverBox.packStart(artistCover, false, false, 0);
-        this.artistCoverBox.packStart(this.similarArtistsBox, true, true, 0);
+        artistCoverBox.packStart(artistCover, false, false, 0);
+        artistCoverBox.packStart(this.similarArtistsBox, true, true, 0);
 
-        this.playingBox.packEnd(actionButtonsBox, false, false, 0);
-        this.playingBox.packEnd(playingTitleBox, true, true, 3);
-        this.playingBox.packEnd(albumCover, false, false, 0);
-        this.playingBox.setAlignHorizontal(Align.START);
+        playingBox.packEnd(actionButtonsBox, false, false, 0);
+        playingBox.packEnd(playingTitleBox, true, true, 3);
+        playingBox.packEnd(albumCover, false, false, 0);
+        playingBox.setAlignHorizontal(Align.START);
 
-        this.artistBioBox.setAlignVertical(Align.START);
-        this.artistBioBox.packStart(playingBox, true, true, 3);
-        this.artistBioBox.packStart(this.tab, true, true, 3);
+        artistBioBox.setAlignVertical(Align.START);
+        artistBioBox.packStart(playingBox, true, true, 3);
+        artistBioBox.packStart(this.tab, true, true, 3);
 
-        this.artistInfoBox.setBorderWidth(5);
-        this.artistInfoBox.packStart(artistBioBox, true, true, 0);
-        this.artistInfoBox.packStart(artistCoverBox, true, true, 0);
+        artistInfoBox.setBorderWidth(5);
+        artistInfoBox.packStart(artistBioBox, true, true, 0);
+        artistInfoBox.packStart(artistCoverBox, true, true, 0);
 
-        this.conteiner.packStart(menuBar, false, false, 0);
-        this.conteiner.packStart(artistInfoBox, false, false, 0);
-        this.conteiner.packEnd(musicBarBox, false, true, 0);
+        conteiner.packStart(menuBar, false, false, 0);
+        conteiner.packStart(artistInfoBox, false, false, 0);
+        conteiner.packEnd(musicBarBox, false, true, 0);
         w.add(conteiner);
 //        this.updatePlayingTitle();
 //        this.updateButtons();
+        this.updateMusicProgressMain();
 
        // this.update();
         buildStoppedState();
@@ -360,7 +378,7 @@ public class MyApp {
 	private void updateTitle() {
 		win.setTitle(artist.replace("&amp;", "&") + " - "
 				+  currentMusicTitle.replace("&amp;", "&")
-				+ " | OpenLast.fm " + Main.VERSION);
+				+ " | " + Main.PROGRAM_NAME + " " + Main.VERSION);
 	}
 	
 	private String normalize(String nome) {
@@ -392,7 +410,6 @@ public class MyApp {
 				url = openLastfm.getSimilarArtist(i,"url").replace("&", "&amp;");
 				name = openLastfm.getSimilarArtist(i,"name");
 			} catch (Exception e) {
-				System.err.println(e.getMessage());
 				System.err.println("Similar artists for " + artist + " not found.");
 				url = "";
 				name = "";
@@ -461,6 +478,7 @@ public class MyApp {
 						myImage = InfoRequester.downloadImage(imageUrl);
 					}
                 } catch (Exception e) {
+                	displayError(e);
                     System.err.println(e.getMessage());
                 }
                 image.setImage(myImage);
@@ -482,6 +500,46 @@ public class MyApp {
         }
 
 		this.actualLengh.setLabel(String.format("%02d:%02d", (int)elapsed/60,(int)elapsed % 60));
+	}
+	
+	public void updateMusicProgressMain() {
+		Thread t0 = new Thread() {
+
+			@Override
+			public void run() {
+				do {
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						displayError(e);
+						e.printStackTrace();
+					}
+					int length = -1;
+					if (playing) {
+						length = song.getLength();
+					}
+				
+				while (elapsed < length && playing) {
+					elapsed++;
+			        float fraction = ((float) elapsed)/song.getLength();
+			        if (fraction != fraction || Float.isInfinite(fraction)) {
+			            musicBar.setFraction(0.0);
+			        } else if (fraction <= 1.0) {
+			            musicBar.setFraction(fraction);
+			        }
+
+					actualLengh.setLabel(String.format("%02d:%02d", (int)elapsed/60,(int)elapsed % 60));
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+				} while(true);
+			}
+
+		};
+		t0.start();
 	}
 	
 	public void updateArtist() {
@@ -521,6 +579,8 @@ public class MyApp {
             updateMusicLengh();
 
             this.updatePlayingTitle();
+            playing = true;
+            elapsed = (int) openLastfm.getElapsedTime();
         }
 
         } catch (PlayerException e) {
@@ -591,14 +651,11 @@ public class MyApp {
                     myCover = new Pixbuf("blank_artist.png");
 				}
             } catch (IOException e) {
+            	displayError(e);
                 e.printStackTrace();
             }
             artistCover.setImage(myCover);
         }).start();
-	}
-	
-	public static OpenLastfm getOpenLastfm() {
-		return MyApp.openLastfm;
 	}
 
 }

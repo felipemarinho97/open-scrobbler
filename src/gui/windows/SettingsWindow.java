@@ -1,10 +1,16 @@
-package gui;
+package gui.windows;
+
+import java.net.InterfaceAddress;
 
 import org.gnome.gdk.EventButton;
 import org.gnome.gdk.RGBA;
 import org.gnome.gtk.*;
 
 import backend.OpenLastfm;
+import exceptions.PlayerException;
+import gui.Language;
+import gui.Main;
+import gui.MusicInterface;
 
 public class SettingsWindow extends Window {
 	
@@ -25,7 +31,7 @@ public class SettingsWindow extends Window {
 
 	public SettingsWindow() {
 		super();
-		this.openLastFm = MyApp.getOpenLastfm();
+		this.openLastFm = OpenLastfm.getInstance();
 		
 		this.setTitle("Preferences");
 		this.settingsBox = new Box(Orientation.VERTICAL, 0);
@@ -36,7 +42,7 @@ public class SettingsWindow extends Window {
 		this.buttonsBox = new Box(Orientation.HORIZONTAL, 5);
 
 		this.tabs.setShowBorder(false);
-		this.tabs.appendPage(this.openLastFMBox, new Label("OpenLast.fm"));
+		this.tabs.appendPage(this.openLastFMBox, new Label(Main.PROGRAM_NAME));
 		this.tabs.appendPage(this.musicPlayerBox, new Label("Music Player"));
 		
 		Frame tabsFrame = new Frame(null);
@@ -64,7 +70,7 @@ public class SettingsWindow extends Window {
 		
 		
 		Box apiKeyBox = new Box(Orientation.HORIZONTAL,5);
-		this.apiKeyEntry = new Entry(MyApp.getOpenLastfm().getPref("apiKey"));
+		this.apiKeyEntry = new Entry(this.openLastFm.getPref("apiKey"));
 		this.apiKeyEntry.setSizeRequest(260, 0);
 		apiKeyBox.packStart(new Label("Api Key:"), false, false, 1);
 		apiKeyBox.packStart(this.apiKeyEntry, false, true, 1);
@@ -121,7 +127,7 @@ public class SettingsWindow extends Window {
 
 		interfaceComboBox = new ComboBoxText();
 		interfaceComboBox.appendText("MPD Client");
-		interfaceComboBox.appendText("MPris2");
+		interfaceComboBox.appendText("Spotify (DBus)");
 		interfaceComboBox.setActive(0);
 		interfaceComboBox.connect((ComboBoxText.Changed) comboBox -> {
 			if (interfaceComboBox.getActiveText().equals("MPD Client")) {
@@ -131,8 +137,8 @@ public class SettingsWindow extends Window {
 			}
         });
 
-		musicIntefaceBox.packStart(new Label("Player Interface:"),false,false,1);
-		musicIntefaceBox.packStart(interfaceComboBox,false,false,1);
+		musicIntefaceBox.packStart(new Label("Player Interface:"), false, false,1);
+		musicIntefaceBox.packStart(interfaceComboBox, false, false,1);
 
 		Frame musicInterfaceFrame = new Frame("Music Interface");
 		musicInterfaceFrame.add(musicIntefaceBox);
@@ -177,6 +183,13 @@ public class SettingsWindow extends Window {
 				Language lang = langs[languageComboBox.getActive()];
 				openLastFm.setPref("language", lang.name());
 				openLastFm.setLangIso(lang);
+				
+				MusicInterface[] ifaces = MusicInterface.values();
+				try {
+					openLastFm.changeInterface(ifaces[interfaceComboBox.getActive()]);
+				} catch (PlayerException e) {
+					new ErrorWindow(e);
+				}
 				
 				String key = apiKeyEntry.getText();
 				openLastFm.setPref("apiKey", key);

@@ -6,6 +6,9 @@ import org.gnome.gtk.Button;
 import org.gnome.gtk.IconSize;
 import org.gnome.gtk.Image;
 import org.gnome.gtk.Orientation;
+
+import backend.OpenLastfm;
+
 import org.gnome.gtk.Button.Clicked;
 
 class ControlButtons extends Box {
@@ -19,7 +22,7 @@ class ControlButtons extends Box {
 
 			@Override
 			public void onClicked(Button arg0) {
-				MyApp.getOpenLastfm().togglePlayer();
+				OpenLastfm.getInstance().togglePlayer();
 				toggle.setImage(getPlaybackImage());
 			}
 			
@@ -34,7 +37,7 @@ class ControlButtons extends Box {
 			
 			@Override
 			public void onClicked(Button arg0) {
-				MyApp.getOpenLastfm().nextTrack();
+				OpenLastfm.getInstance().nextTrack();
 				toggle.setImage(getPlaybackImage());
 			}
 		});
@@ -45,7 +48,7 @@ class ControlButtons extends Box {
 			
 			@Override
 			public void onClicked(Button arg0) {
-				MyApp.getOpenLastfm().previousTrack();
+				OpenLastfm.getInstance().previousTrack();
 				toggle.setImage(getPlaybackImage());
 			}
 		});
@@ -59,7 +62,7 @@ class ControlButtons extends Box {
 	}
 
 	private Image getPlaybackImage() {
-		switch (MyApp.getOpenLastfm().getStatus()) {
+		switch (OpenLastfm.getInstance().getStatus()) {
 		case STATUS_PLAYING:
 			return new Image(ActionIcon.MEDIA_PLAYBACK_PAUSE, IconSize.BUTTON);
 		case STATUS_STOPPED:

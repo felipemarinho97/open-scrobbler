@@ -1,5 +1,6 @@
 package backend;
 
+import backend.player.Player;
 import backend.player.PlayerStatus;
 import backend.player.PlayerWrapper;
 import backend.player.Song;
@@ -7,20 +8,44 @@ import exceptions.PlayerException;
 import exceptions.SongException;
 
 import gui.Language;
+import gui.MusicInterface;
 
-public class OpenLastfm {
+import java.util.EventListener;
+import java.util.EventObject;
 
+public class OpenLastfm extends EventSource {
+
+	private static final OpenLastfm INSTANCE = new OpenLastfm();
 	private Pref prefs;
 	private PlayerWrapper playerWrapper;
 	private InfoRequester requester;
 	private LastFMWrapper lastFM;
 
-	public OpenLastfm() throws PlayerException {
+	private OpenLastfm() {
 		this.prefs = new Pref();
-		this.playerWrapper = new PlayerWrapper();
+		try {
+			this.playerWrapper = new PlayerWrapper();
+		} catch (PlayerException e) {
+			e.printStackTrace();
+		}
 		this.requester = new InfoRequester(Language.valueOf(prefs.getPref("language")),
 				prefs.getPref("apiKey"));
 		this.lastFM = new LastFMWrapper(prefs.getPref("apiKey"),prefs.getPref("user"),prefs.getPref("password"), Language.valueOf(prefs.getPref("language")));
+	}
+
+	public void notifyListeners(PlayerEvent event) {
+		if (listeners != null) {
+			for (EventListener e : listeners) {
+				try {
+					((PlayerListener) e).onPlayerChanged(event);
+				} catch (ClassCastException e1) {
+				}
+			}
+		}
+	}
+
+	public static final OpenLastfm getInstance() {
+		return INSTANCE;
 	}
 	
 	public void loveTrack(String artist, String track) {
@@ -83,6 +108,10 @@ public class OpenLastfm {
 		playerWrapper.nextTrack();
 	}
 	
+	public void changeInterface(MusicInterface iface) throws PlayerException {
+		playerWrapper.changeInterface(iface);
+	}
+
 	public void setPref(String key, String value) {
 		prefs.setPref(key, value);
 	}

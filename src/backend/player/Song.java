@@ -1,14 +1,14 @@
 package backend.player;
 
 import exceptions.SongException;
-import org.bff.javampd.MPDSong;
+import org.bff.javampd.song.MPDSong;
 
 /**
  * Created by darklyn on 02/05/17.
  */
 public class Song {
 
-    private String title = "";
+	private String title = "";
     private String album = "";
     private String artist = "";
     private int length = 0;
@@ -20,15 +20,30 @@ public class Song {
     public Song(MPDSong song) throws SongException {
         super();
         this.title = song.getTitle();
-        this.album = song.getAlbum();
-        this.artist = song.getArtist();
+        this.album = song.getAlbumName();
+        this.artist = song.getArtistName();
         this.length = song.getLength();
-        if (title == null || album == null || artist == null) {
+        if (title == null || title.trim().isEmpty() 
+        		|| album == null || album.trim().isEmpty() 
+        		|| artist == null || artist.trim().isEmpty()) {
             throw new SongException("Missing Tags");
         }
     }
+    
+    public Song(String title, String album, String artist, int length) throws SongException {
+		super();
+        if (title == null || title.trim().isEmpty() 
+        		|| album == null || album.trim().isEmpty() 
+        		|| artist == null || artist.trim().isEmpty()) {
+            throw new SongException("Missing Tags");
+        }
+		this.title = title;
+		this.album = album;
+		this.artist = artist;
+		this.length = length;
+	}
 
-    public String getTitle() {
+	public String getTitle() {
         return title;
     }
 
@@ -65,4 +80,9 @@ public class Song {
         result = 31 * result + length;
         return result;
     }
+    
+    @Override
+	public String toString() {
+		return "Song [title=" + title + ", album=" + album + ", artist=" + artist + ", length=" + length + "]";
+	}
 }

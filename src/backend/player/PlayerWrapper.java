@@ -1,21 +1,37 @@
 package backend.player;
 
+import backend.player.dbus.Handler;
+import backend.player.dbus.Spotify;
 import exceptions.PlayerException;
 import exceptions.SongException;
+import gui.MusicInterface;
 
 /**
  * Created by darklyn on 02/05/17.
  */
 public class PlayerWrapper {
-    Player player;
+    private Player player;
+    private MusicInterface ifaceType;
+    private Handler handler;
 
     public PlayerWrapper() throws PlayerException {
         // Defaults connect to an MPRIS Interface.
-        this.player = new MPD();
+        this.handler = new Handler();
+        this.player = new MPD(this.handler);
+        this.ifaceType = MusicInterface.MPD;
     }
 
-    public void changeInterface(Player player) {
-        this.player = player;
+    public void changeInterface(MusicInterface iface) throws PlayerException {
+    	switch (iface) {
+    		case MPD:
+    			this.player = new MPD(this.handler);
+                break;
+            case SPOTIFY:
+    			this.player = new Spotify(this.handler);
+    			break;
+    	}
+    	
+		this.ifaceType = iface;
     }
 
     public Song getCurrentSong() throws PlayerException, SongException {
